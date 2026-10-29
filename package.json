@@ -1,0 +1,88 @@
+{
+  "name": "gde-capi",
+  "version": "3.0.0",
+  "private": true,
+  "dependencies": {
+    "@coveo/atomic-legacy": "^0.0.0",
+    "@coveo/atomic-react": "^3.11.0",
+    "@coveo/headless": "^3.44.0",
+    "@coveo/platform-client": "^61.5.1",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.8",
+    "@mui/material": "^7.3.8",
+    "autosuggest-highlight": "^3.3.4",
+    "axios": "^1.13.5",
+    "concurrently": "^9.2.1",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "firebase": "^12.9.0",
+    "font-awesome": "^4.7.0",
+    "lodash": "^4.17.23",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-icons-kit": "^2.0.0",
+    "react-loading-skeleton": "^3.5.0",
+    "react-router-dom": "^7.13.0",
+    "react-spinners": "^0.17.0",
+    "styled-components": "^6.3.10",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "postinstall": "node ./scripts/fix-atomic-legacy.js",
+    "dev": "concurrently \"node api-server.js\" \"vite\"",
+    "build": "vite build",
+    "start": "vite",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "api-server": "node api-server.js",
+    "prepare": "husky"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,css,scss,md}": "prettier --write"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/autosuggest-highlight": "^3.2.3",
+    "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.23",
+    "@types/node": "^25.2.3",
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.7",
+    "@types/react-router-dom": "^5.3.3",
+    "@types/styled-components": "^5.1.36",
+    "@vitejs/plugin-react": "^5.1.4",
+    "@vitest/ui": "^4.0.18",
+    "ajv": "^8.18.0",
+    "husky": "^9.1.7",
+    "jsdom": "^28.1.0",
+    "lint-staged": "^16.2.7",
+    "netlify-cli": "^23.15.1",
+    "playwright": "^1.58.2",
+    "prettier": "^3.8.1",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
+  }
+}

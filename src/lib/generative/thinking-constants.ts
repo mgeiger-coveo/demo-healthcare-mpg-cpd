@@ -1,0 +1,1 @@
+export const PENDING_THINKING_KEY = "__PENDING_THINKING__";

@@ -1,0 +1,230 @@
+name: Deploy Demo Branch to Netlify
+
+on:
+  push:
+    branches:
+      - "**demo**" # Match any branch containing "demo"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "22"
+
+      - name: Cache node_modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm install --legacy-peer-deps
+
+      - name: Set up environment variables
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.TRANE_AGENT_AWS_ACCESS_KEY_ID }}" >> .env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.TRANE_AGENT_AWS_SECRET_ACCESS_KEY }}" >> .env
+
+      - name: Inject AWS credentials into edge function
+        run: |
+          sed -i 's/TRANE_AGENT_AWS_ACCESS_KEY_ID/${{ secrets.TRANE_AGENT_AWS_ACCESS_KEY_ID }}/g' netlify/edge-functions/agent-stream.ts
+          sed -i 's/TRANE_AGENT_AWS_SECRET_ACCESS_KEY/${{ secrets.TRANE_AGENT_AWS_SECRET_ACCESS_KEY }}/g' netlify/edge-functions/agent-stream.ts
+          echo "✅ Injected AWS credentials into edge function"
+
+      - name: Inject environment variables into edge function
+        run: |
+          # Source the .env file to get the values
+          set -a
+          source .env
+          set +a
+
+          # Replace placeholders with actual values from VITE_* env vars
+          if [ -n "${VITE_SEARCH_API_KEY}" ]; then
+            sed -i "s|PLACEHOLDER_VITE_SEARCH_AGENT_API_KEY|${VITE_SEARCH_API_KEY}|g" netlify/edge-functions/agent-stream.ts
+          fi
+          sed -i "s|PLACEHOLDER_VITE_ORGANIZATION_ID|${VITE_ORGANIZATION_ID}|g" netlify/edge-functions/agent-stream.ts
+          sed -i "s|PLACEHOLDER_VITE_PLATFORM_URL|${VITE_PLATFORM_URL}|g" netlify/edge-functions/agent-stream.ts
+          sed -i "s|PLACEHOLDER_VITE_COMMERCE_ENGINE_LANGUAGE|${VITE_COMMERCE_ENGINE_LANGUAGE}|g" netlify/edge-functions/agent-stream.ts
+          sed -i "s|PLACEHOLDER_VITE_COMMERCE_ENGINE_COUNTRY|${VITE_COMMERCE_ENGINE_COUNTRY}|g" netlify/edge-functions/agent-stream.ts
+          sed -i "s|PLACEHOLDER_VITE_COMMERCE_ENGINE_CURRENCY|${VITE_COMMERCE_ENGINE_CURRENCY}|g" netlify/edge-functions/agent-stream.ts
+          sed -i "s|PLACEHOLDER_VITE_COMMERCE_ENGINE_TRACKING_ID|${VITE_COMMERCE_ENGINE_TRACKING_ID}|g" netlify/edge-functions/agent-stream.ts
+          echo "✅ Injected Coveo config into edge function"
+
+          # Verify no placeholders remain
+          if grep -q "PLACEHOLDER_VITE_" netlify/edge-functions/agent-stream.ts; then
+            echo "  ⚠️ Warning: Some placeholders may not have been replaced:"
+            grep "PLACEHOLDER_VITE_" netlify/edge-functions/agent-stream.ts
+          fi
+
+      - name: Build React App
+        run: npm run build
+        env:
+          CI: false
+          BUILD_PATH: dist
+
+      - name: Get branch and site name
+        id: vars
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          SITE_NAME="coveo-${BRANCH_NAME//\//-}" # Replace '/' with '-'
+          SITE_NAME=$(echo "$SITE_NAME" | tr '[:upper:]' '[:lower:]') # Netlify subdomains are lowercase
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "site_name=$SITE_NAME" >> $GITHUB_OUTPUT
+
+      - name: Ensure Netlify site exists (create if missing)
+        id: ensure_site
+        run: |
+          SITE_NAME="${{ steps.vars.outputs.site_name }}"
+          TEAM_SLUG="oa-netlify"
+          AUTH_HEADER="Authorization: Bearer ${{ secrets.NETLIFY_AUTH_TOKEN }}"
+
+          echo "🔍 Searching for existing site named '$SITE_NAME'..."
+
+          # Get all sites accessible to the user
+          API_RESPONSE=$(curl -s -H "$AUTH_HEADER" "https://api.netlify.com/api/v1/sites")
+
+          # Search for site by name
+          SITE_ID=$(echo "$API_RESPONSE" | jq -r --arg name "$SITE_NAME" '.[] | select(.name == $name) | .id')
+
+          # If site exists, check if it's in the correct team
+          if [ ! -z "$SITE_ID" ]; then
+            SITE_ACCOUNT=$(echo "$API_RESPONSE" | jq -r --arg name "$SITE_NAME" '.[] | select(.name == $name) | .account_slug')
+            if [ "$SITE_ACCOUNT" != "$TEAM_SLUG" ]; then
+              echo "⚠️ Site '$SITE_NAME' exists but is in account '$SITE_ACCOUNT', not '$TEAM_SLUG'"
+              echo "❌ Please manually move the site to the correct team or delete it first"
+              exit 1
+            else
+              echo "✅ Site '$SITE_NAME' found in correct team '$TEAM_SLUG'"
+            fi
+          fi
+
+          if [ -z "$SITE_ID" ]; then
+            echo "⚠️ Site not found. Creating site '$SITE_NAME' in team '$TEAM_SLUG'..."
+
+            # Try the correct API endpoint format based on working CLI command
+            CREATE_RESPONSE=$(curl -s -X POST "https://api.netlify.com/api/v1/sites" \
+              -H "$AUTH_HEADER" \
+              -H "Content-Type: application/json" \
+              -d "{\"account_slug\": \"$TEAM_SLUG\", \"name\": \"$SITE_NAME\"}")
+
+            echo "📝 Netlify API response: $CREATE_RESPONSE"
+
+            # Extract site ID from the response
+            SITE_ID=$(echo "$CREATE_RESPONSE" | jq -r '.id' 2>/dev/null)
+
+            # If the first format didn't work, try the alternative format
+            if [ "$SITE_ID" == "null" ] || [ -z "$SITE_ID" ]; then
+              echo "❌ First format failed. Trying alternative format..."
+              # Alternative format with nested site object
+              CREATE_RESPONSE=$(curl -s -X POST "https://api.netlify.com/api/v1/sites" \
+                -H "$AUTH_HEADER" \
+                -H "Content-Type: application/json" \
+                -d "{\"account_slug\": \"$TEAM_SLUG\", \"site\": {\"name\": \"$SITE_NAME\"}}")
+              echo "📝 Alternative API response: $CREATE_RESPONSE"
+              SITE_ID=$(echo "$CREATE_RESPONSE" | jq -r '.id' 2>/dev/null)
+            fi
+
+            if [ "$SITE_ID" == "null" ] || [ -z "$SITE_ID" ]; then
+              echo "❌ Failed to create site in team '$TEAM_SLUG'. Response: $CREATE_RESPONSE"
+              exit 1
+            else
+              echo "✅ Created site: $SITE_NAME ($SITE_ID) in team '$TEAM_SLUG'"
+            fi
+          else
+            echo "✅ Site already exists: $SITE_NAME ($SITE_ID)"
+          fi
+
+          echo "site_id=$SITE_ID" >> $GITHUB_OUTPUT
+
+      - name: Inject Coveo config into serverless function
+        run: |
+          # Source the .env file to read server-side variables
+          set -a
+          source .env
+          set +a
+
+          echo "🔧 Injecting Coveo config into serverless function (token.ts)..."
+          echo "  PLATFORM_URL is: ${PLATFORM_URL:-(empty)}"
+          echo "  ORGANIZATION_ID is: ${ORGANIZATION_ID:-(empty)}"
+          echo "  API_KEY length: ${#API_KEY}"
+          echo "  USER_EMAIL is: ${USER_EMAIL:-(empty)}"
+
+          # Replace placeholder constants in token.ts with actual values
+          sed -i "s|INJECT_PLATFORM_URL_VALUE|${PLATFORM_URL}|g" netlify/functions/token.ts
+          sed -i "s|INJECT_ORGANIZATION_ID_VALUE|${ORGANIZATION_ID}|g" netlify/functions/token.ts
+          sed -i "s|INJECT_API_KEY_VALUE|${API_KEY}|g" netlify/functions/token.ts
+          sed -i "s|INJECT_USER_EMAIL_VALUE|${USER_EMAIL}|g" netlify/functions/token.ts
+
+          # Verify replacements were made (check that no placeholders remain)
+          if grep -q "INJECT_PLATFORM_URL_VALUE\|INJECT_ORGANIZATION_ID_VALUE\|INJECT_API_KEY_VALUE\|INJECT_USER_EMAIL_VALUE" netlify/functions/token.ts; then
+            echo "  ❌ Some placeholders were not replaced!"
+            grep "INJECT_.*_VALUE" netlify/functions/token.ts
+            exit 1
+          else
+            echo "  ✅ All placeholders replaced successfully"
+          fi
+
+      - name: Set Netlify environment variables
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ steps.ensure_site.outputs.site_id }}
+        run: |
+          echo "🔧 Setting environment variables..."
+          npx netlify env:set AWS_ACCESS_KEY_ID "${{ secrets.TRANE_AGENT_AWS_ACCESS_KEY_ID }}" --scope builds --scope functions --scope runtime
+          npx netlify env:set AWS_SECRET_ACCESS_KEY "${{ secrets.TRANE_AGENT_AWS_SECRET_ACCESS_KEY }}" --scope builds --scope functions --scope runtime
+          echo "✅ Environment variables set"
+          echo "⏳ Waiting for propagation..."
+          sleep 10
+
+      - name: Deploy to Netlify
+        shell: bash
+        run: |
+          source .env
+          SITE_ID=${{ steps.ensure_site.outputs.site_id }}
+          TEAM_SLUG="oa-netlify"
+
+          echo "🔐 Checking if password protection is enabled..."
+          if [ "$NETLIFY_PASSWORD_PROTECTED" = "true" ]; then
+            echo "⚙️ Password protection enabled: updating Netlify site with password..."
+
+            if [ -z "$PASSWORD" ]; then
+              echo "❌ NETLIFY_PASSWORD_PROTECTED is true but PASSWORD is empty. Please set it in .env"
+              exit 1
+            fi
+
+            DATA=$(printf '{"password": "%s"}' "$PASSWORD")
+
+            RESPONSE=$(curl -s -w "%{http_code}" -o /tmp/netlify_response.json \
+              -X PATCH "https://api.netlify.com/api/v1/sites/$SITE_ID" \
+              -H "Authorization: Bearer ${{ secrets.NETLIFY_AUTH_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "$DATA")
+
+            if [ "$RESPONSE" = "200" ]; then
+              echo "✅ Password protection applied successfully to site $SITE_ID"
+            else
+              echo "❌ Failed to apply password protection (HTTP $RESPONSE)"
+              cat /tmp/netlify_response.json
+              exit 1
+            fi
+          else
+            echo "🔓 Password protection not enabled. Deploying normally."
+          fi
+
+          npx netlify deploy \
+            --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} \
+            --site=${{ steps.ensure_site.outputs.site_id }} \
+            --dir=dist \
+            --prod \
+            --no-build \
+            --debug \
+            --message "Deploy from ${{ steps.vars.outputs.branch_name }}"

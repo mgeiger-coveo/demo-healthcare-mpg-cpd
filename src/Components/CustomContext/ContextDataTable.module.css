@@ -1,0 +1,17 @@
+.table td {
+  padding: 0.2rem 0.5rem;
+  text-align: center;
+}
+
+.profile-image {
+  width: 120px;
+  height: 120px;
+  margin: 15px;
+}
+
+@media (max-width: 768px) {
+  .profile-image {
+    width: 100px;
+    height: 100px;
+  }
+}

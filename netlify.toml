@@ -1,0 +1,72 @@
+# Netlify configuration for Trane Supply demo
+
+[build]
+  # Build command for React app
+  command = "npm run build"
+  
+  # Directory where the built files will be
+  publish = "dist"
+  
+  # Directory for Netlify Functions
+  functions = "netlify/functions"
+  
+  # Directory for Edge Functions
+  edge_functions = "netlify/edge-functions"
+
+[build.environment]
+  # Node version for build
+  NODE_VERSION = "22"
+
+# Edge Functions configuration
+[[edge_functions]]
+  path = "/agent-stream"
+  function = "agent-stream"
+
+[[edge_functions]]
+  path = "/test-stream"
+  function = "test-stream"
+
+[[edge_functions]]
+  path = "/env-check"
+  function = "env-check"
+
+# Proxy /api/token requests to the Netlify serverless function
+[[redirects]]
+  from = "/api/token"
+  to = "/.netlify/functions/token"
+  status = 200
+
+# SPA fallback - serve index.html for all routes
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for security and CORS
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-XSS-Protection = "1; mode=block"
+
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Headers = "Content-Type"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+
+# Environment variables (set these in Netlify dashboard for production)
+# 
+#
+# Coveo Configuration:
+#   VITE_GET_PRODUCT_LISTING_API_KEY
+#   VITE_ORGANIZATION_ID
+#   VITE_PLATFORM_URL
+#   VITE_COMMERCE_ENGINE_LANGUAGE
+#   VITE_COMMERCE_ENGINE_COUNTRY
+#   VITE_COMMERCE_ENGINE_CURRENCY
+#   VITE_COMMERCE_ENGINE_TRACKING_ID
+#
