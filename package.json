@@ -1,5 +1,5 @@
 {
-  "name": "gde-capi",
+  "name": "demo-healthcare-mpg-cpd",
   "version": "3.0.0",
   "private": true,
   "dependencies": {

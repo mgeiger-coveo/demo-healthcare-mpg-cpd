@@ -1,6 +1,6 @@
-# Generic Demo Environment for Commerce API (WIP)
+# demo-healthcare-mpg-cpd
 
-GDE for new commerce api. It will include the following features:
+Healthcare Commerce POC. It includes the following features:
 
 1. Search Page (commerce api)
 2. Product Listing Page (commerce api)
@@ -17,7 +17,7 @@ Will work only with the commerce catalog and CMH setup.
 
 ## API Keys
 
-GDE-CAPI requires a Product Listing key and one of two authentication options:
+demo-healthcare-mpg-cpd requires a Product Listing key and one of two authentication options:
 
 ### Authentication (choose one)
 
@@ -56,17 +56,9 @@ VITE_SEARCH_API_KEY=your-search-api-key
 Clone the project into local
 
 ```bash
-git clone -b GDE-CAPI --single-branch https://github.com/coveo/GDE.git <demo-name>
+git clone https://github.com/mgeiger-coveo/demo-healthcare-mpg-cpd.git
 
-cd <demo-name>
-```
-
-To clone an existing Demo
-
-```bash
-git clone -b <demo-branch> --single-branch https://github.com/coveo/GDE.git <demo-name>
-
-cd <demo-name>
+cd demo-healthcare-mpg-cpd
 ```
 
 Install all the npm packages. Go into the project folder and type the following command to install all npm packages
@@ -115,14 +107,12 @@ AWS_BEDROCK_AGENTCORE_RUNTIME_ARN=arn:aws:bedrock-agentcore:us-east-1:your-accou
 
 ## Creating demo branches
 
-When creating a new branch for a demo, please follow this format:
+When creating a new branch, follow this format:
 
-`demo-<demo-name>`
+`feature/<work-item-description>`
 
-Replace `<demo-name>` with a brief, descriptive name of the demo or task you're working on.
-
-Any branch containing `demo` in its name will be automatically deployed to Netlify.
+Replace `<work-item-description>` with a brief, descriptive name of the work item.
 
 ## Deploying to Netlify
 
-The demo is configured to be deployed on Netlify. It will do so automatically when you push a branch containing `demo` in its name (e.g., `demo-my-demo`).
+The application is configured to be deployed on Netlify. Branches containing `demo` in their name are automatically deployed (for example, `demo-my-demo`).

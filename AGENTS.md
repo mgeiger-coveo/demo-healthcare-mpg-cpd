@@ -1,6 +1,6 @@
 # AGENTS.md - Development Guide
 
-This document provides essential information for AI coding agents working on the GDE-CAPI (Generic Demo Environment for Commerce API) project.
+This document provides essential information for AI coding agents working on the demo-healthcare-mpg-cpd Healthcare Commerce project.
 
 ## Project Overview
 
@@ -185,9 +185,9 @@ return <Error />;
 
 ## Branch Naming
 
-Follow format: `GDE-CAPI-<feature-name>`
+Follow format: `feature/<work-item-description>`
 
-Example: `GDE-CAPI-search-improvements`
+Example: `feature/search-improvements`
 
 ## Key Dependencies
 

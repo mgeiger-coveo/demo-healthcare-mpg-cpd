@@ -49,7 +49,7 @@ export async function getSearchToken() {
   }
 }
 
-// Not used in the GDE-CAPI but kept here for reference
+// Not currently used in this application but kept here for reference
 export async function initializeHeadlessEngine() {
   return buildSearchEngine({
     configuration: {
