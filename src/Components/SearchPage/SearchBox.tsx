@@ -1,10 +1,14 @@
-import { FunctionComponent, useEffect, useState, useContext } from "react";
+import {
+  FunctionComponent,
+  useEffect,
+  useState,
+  useContext,
+  useMemo,
+  useRef,
+} from "react";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
-import {
-  SearchBox as HeadlessSearchBox,
-  SearchBoxOptions,
-} from "@coveo/headless";
+import { SearchBox as HeadlessSearchBox } from "@coveo/headless";
 import EngineContext, {
   CommerceEngineContext,
 } from "../../common/engineContext";
@@ -83,6 +87,7 @@ const SearchBoxRenderer: FunctionComponent<SearchBoxProps> = (props) => {
                           JSON.stringify({ value: "" }),
                         );
                         controller.updateText("");
+                        controller.submit();
                       }}
                     >
                       <CloseIcon />
@@ -130,26 +135,35 @@ const SearchBoxRenderer: FunctionComponent<SearchBoxProps> = (props) => {
 };
 
 const SearchBox = () => {
-  const options: SearchBoxOptions = { numberOfSuggestions: 8 };
+  const commerceEngine = useContext(CommerceEngineContext);
+  const hydratedController = useRef<HeadlessSearchBox | null>(null);
+  const controller = useMemo(
+    () =>
+      commerceEngine
+        ? buildSearchBox(commerceEngine, {
+            options: { numberOfSuggestions: 8 },
+          })
+        : null,
+    [commerceEngine],
+  );
 
-  const commerceEngine = useContext(CommerceEngineContext)!;
+  useEffect(() => {
+    if (!controller || hydratedController.current === controller) {
+      return;
+    }
 
-  if (!commerceEngine) {
+    hydratedController.current = controller;
+    const searchqueryObject = localStorage.getItem(STANDALONE_SEARCHBOX_KEY)
+      ? JSON.parse(localStorage.getItem(STANDALONE_SEARCHBOX_KEY) as string)
+      : null;
+    const value = searchqueryObject ? searchqueryObject.value : "";
+
+    controller.updateText(value);
+    controller.submit();
+  }, [controller]);
+
+  if (!controller) {
     return null;
-  }
-
-  const controller = buildSearchBox(commerceEngine, { options });
-
-  const searchqueryObject = localStorage.getItem(STANDALONE_SEARCHBOX_KEY)
-    ? JSON.parse(localStorage.getItem(STANDALONE_SEARCHBOX_KEY) as string)
-    : null;
-
-  if (searchqueryObject) {
-    controller.updateText(searchqueryObject.value);
-    controller.submit();
-  } else if (controller.state.value === "") {
-    controller.updateText("");
-    controller.submit();
   }
 
   return <SearchBoxRenderer controller={controller} />;

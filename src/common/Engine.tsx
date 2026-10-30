@@ -75,8 +75,7 @@ export async function initializeCommerceHeadlessEngine() {
         country: import.meta.env.VITE_COMMERCE_ENGINE_COUNTRY,
         language: import.meta.env.VITE_COMMERCE_ENGINE_LANGUAGE,
         view: {
-          url:
-            import.meta.env.VITE_COMMERCE_ENGINE_URL + window.location.pathname,
+          url: `${window.location.origin}${window.location.pathname}`,
         },
       },
       analytics: {
