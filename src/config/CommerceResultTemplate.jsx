@@ -11,8 +11,6 @@ import {
   Box,
 } from "@mui/material";
 import styled from "styled-components";
-import ProductBadge from "../Components/ProductBadge/ProductBadge";
-import { BadgePlacementIds } from "./SearchConfig";
 
 const StyledCard = styled(Card)`
   display: flex;
@@ -22,7 +20,8 @@ const StyledCard = styled(Card)`
   border: none;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  min-width: 280px;
+  min-width: 0;
+  width: 100%;
   overflow: hidden;
   transition:
     transform 0.25s ease,
@@ -119,10 +118,6 @@ const ResultTemplate = ({ controller, product }) => {
             flexGrow: 1,
           }}
         >
-          <ProductBadge
-            productId={product.permanentid}
-            placementIds={BadgePlacementIds}
-          />
           {product.ec_brand && (
             <Typography
               variant="caption"

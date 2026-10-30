@@ -121,6 +121,11 @@ export const SearchWrapper = styled.div`
   flex: 1;
   max-width: 1600px;
   display: flex;
+  min-width: 0;
+  @media (max-width: 768px) {
+    flex-direction: column;
+    width: 100%;
+  }
 `;
 
 const SideBarRecommendationContainer = styled.div`
@@ -174,11 +179,15 @@ atomic-no-results::part(icon){
 export const FacetContainer = styled.div`
   display: flex;
   flex: 1;
-  width: 100%;
+  min-width: 0;
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 export const ResultsListContainer = styled.div`
   display: flex;
   flex: 3;
   flex-direction: column;
+  min-width: 0;
 `;

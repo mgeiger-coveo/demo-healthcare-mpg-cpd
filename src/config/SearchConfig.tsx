@@ -24,8 +24,8 @@ export const FieldToIncludesInSearchResults: string[] = [
   "ytvideoduration",
   "pdp",
   "dictField",
-   "hc_provider_status",
-     "hc_provider_status",
+  "hc_provider_status",
+  "hc_provider_status",
   "hc_specialties",
   "hc_languages",
   "hc_accepting_patients",
@@ -34,17 +34,13 @@ export const FieldToIncludesInSearchResults: string[] = [
   "hc_services",
   "hc_profile_url",
   "hc_medical_group",
-  "hc_board_certification"
+  "hc_board_certification",
 ];
 
 export const NoResultRecommendationConfig = {
   active: true,
   slotID: "0dae3845-6a1a-48e9-95d6-72e8e9bc0c9f",
 };
-
-export const BadgePlacementIds: string[] = [
-  "6ce1ad82-9406-46b1-832b-820dde5252c8",
-];
 
 export const SearchBarTitle = "What can we help you find?";
 

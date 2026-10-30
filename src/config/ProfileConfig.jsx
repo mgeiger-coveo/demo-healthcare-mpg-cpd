@@ -13,6 +13,8 @@ Developer tools > Application > Storage > LocalStorage
 
 */
 
+import AnonymousProfile from "../assets/AnonymousProfile.svg";
+
 // DONOT CHANGE
 export const KEY_NAME_PROFILE_SELECTED = "profile_selected_v2";
 export const KEY_NAME_CONTEXT_DATA = "context_data_v2";
@@ -20,8 +22,7 @@ export const KEY_NAME_CONTEXT_DATA = "context_data_v2";
 export const ProfileConfig = [
   {
     name: "Anonymous",
-    profile:
-      "https://icon-library.com/images/anonymous-user-icon/anonymous-user-icon-2.jpg",
+    profile: AnonymousProfile,
     context: [],
   },
   {
