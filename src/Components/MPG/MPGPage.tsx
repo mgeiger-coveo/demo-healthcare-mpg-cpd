@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useCallback,
 } from "react";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
@@ -19,11 +20,17 @@ import {
   RegularFacet,
 } from "@coveo/headless/commerce";
 import styled from "styled-components";
+import {
+  buildSearchBox as buildStandardSearchBox,
+  SearchEngine,
+} from "@coveo/headless";
 import { CommerceEngineContext } from "../../common/engineContext";
+import EngineContext from "../../common/engineContext";
 import MPGSearchBox from "./MPGSearchBox";
 import SpecialtyButtons from "./SpecialtyButtons";
 import MPGFacetList from "./MPGFacetList";
 import ProviderList from "./ProviderList";
+import RelatedResources from "./RelatedResources";
 import { LanguageContext } from "../Internationalization/LanguageUtils";
 import { MPGConfigTranslations } from "../../config/InternationalizationConfig";
 import {
@@ -60,7 +67,39 @@ import { Theme } from "../../config/theme";
 
 interface MPGPageRendererProps {
   engine: CommerceEngine;
+  resourceEngine: SearchEngine;
 }
+
+interface RelatedResource {
+  title: string;
+  description: string;
+  type?: string;
+  link: string;
+}
+
+const toRelatedResource = (result: any): RelatedResource | null => {
+  const link = String(result?.clickUri ?? "");
+  const source = String(result?.raw?.source ?? "");
+  const isProvider =
+    link.startsWith("provider://") ||
+    source === "HC - Provider Catalog" ||
+    Boolean(result?.raw?.ec_product_id);
+
+  const title = String(result?.title ?? "").trim();
+  if (isProvider || !title || !/^https?:\/\//i.test(link)) return null;
+
+  return {
+    title,
+    description: String(
+      result?.excerpt ??
+        result?.raw?.ec_description ??
+        result?.raw?.description ??
+        "",
+    ).trim(),
+    type: String(result?.raw?.sysfiletype ?? "").trim() || undefined,
+    link,
+  };
+};
 
 const readFragment = () => window.location.hash.slice(1);
 
@@ -69,7 +108,72 @@ const readFragment = () => window.location.hash.slice(1);
 const SEARCH_PAGE_PATH = "/mpg";
 
 const MPGPageRenderer: FunctionComponent<MPGPageRendererProps> = (props) => {
-  const { engine } = props;
+  const { engine, resourceEngine } = props;
+  const resourceSearchBox = useMemo(
+    () =>
+      buildStandardSearchBox(resourceEngine, {
+        options: { id: "mpg-related-resources-search-box" },
+      }),
+    [resourceEngine],
+  );
+  const [resourceQuery, setResourceQuery] = useState("");
+  const [resourceStatus, setResourceStatus] = useState<
+    "idle" | "loading" | "loaded" | "error"
+  >("idle");
+  const [resources, setResources] = useState<RelatedResource[]>([]);
+  const lastResourceQuery = useRef<string | null>(null);
+
+  const submitRelatedResources = useCallback(
+    (value: string) => {
+      const query = String(value ?? "").trim();
+      if (!query) {
+        lastResourceQuery.current = null;
+        setResourceQuery("");
+        setResources([]);
+        setResourceStatus("idle");
+        return;
+      }
+      if (lastResourceQuery.current === query) return;
+
+      lastResourceQuery.current = query;
+      setResourceQuery(query);
+      setResources([]);
+      setResourceStatus("loading");
+      resourceSearchBox.updateText(query);
+      resourceSearchBox.submit();
+    },
+    [resourceSearchBox],
+  );
+
+  useEffect(
+    () =>
+      resourceEngine.subscribe(() => {
+        const searchState = resourceEngine.state.search;
+        if (
+          resourceStatus !== "loading" ||
+          searchState.isLoading ||
+          searchState.queryExecuted !== resourceQuery ||
+          resourceEngine.state.query.q !== resourceQuery
+        )
+          return;
+        if (searchState.error) {
+          setResourceStatus("error");
+          return;
+        }
+        const validResources = (searchState.results ?? [])
+          .map(toRelatedResource)
+          .filter((resource): resource is RelatedResource => resource !== null);
+        setResources(validResources);
+        setResourceStatus("loaded");
+      }),
+    [resourceEngine, resourceStatus],
+  );
+
+  useEffect(() => {
+    const initialQuery = readQueryFromFragment(readFragment());
+    if (initialQuery) submitRelatedResources(initialQuery);
+  }, [submitRelatedResources]);
+
   const { getText } = useContext(LanguageContext);
 
   // First, before any controller exists: setView resets the facet, parameter, sort,
@@ -116,7 +220,10 @@ const MPGPageRenderer: FunctionComponent<MPGPageRendererProps> = (props) => {
       [engine, viewUrl],
     );
 
-  const searchBoxModel = useHeadlessSearchBoxModel(searchBox);
+  const searchBoxModel = useHeadlessSearchBoxModel(
+    searchBox,
+    submitRelatedResources,
+  );
 
   // Typeahead product suggestions. Keyed to the same search box id so the dropdown's
   // products belong to this page's query, and memoized because constructing the
@@ -196,13 +303,14 @@ const MPGPageRenderer: FunctionComponent<MPGPageRendererProps> = (props) => {
       lastSynchronized.current = fragment;
       try {
         urlManager.synchronize(fragment);
+        submitRelatedResources(readQueryFromFragment(fragment));
       } catch (error) {
         console.warn("Ignoring an invalid search fragment", fragment, error);
       }
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
-  }, [urlManager]);
+  }, [urlManager, submitRelatedResources]);
 
   // Populates the pills, the refinements and the provider list without the user typing.
   // Unlike /search this page never reads or writes the standalone search box key and
@@ -278,6 +386,14 @@ const MPGPageRenderer: FunctionComponent<MPGPageRendererProps> = (props) => {
               viewMode={viewMode}
               onViewModeChange={setPersistedViewMode}
             />
+            <RelatedResources
+              query={resourceQuery}
+              isLoading={resourceStatus === "loading"}
+              error={
+                resourceStatus === "error" ? "Search request failed" : null
+              }
+              resources={resources}
+            />
           </Grid>
         </Grid>
       </Card>
@@ -289,8 +405,11 @@ const MPGPageRenderer: FunctionComponent<MPGPageRendererProps> = (props) => {
 // App.tsx pass an engine down, but this page only needs the commerce engine.
 const MPGPage = () => {
   const commerceEngine = useContext(CommerceEngineContext);
-  if (!commerceEngine) return <div>Loading...</div>;
-  return <MPGPageRenderer engine={commerceEngine} />;
+  const resourceEngine = useContext(EngineContext);
+  if (!commerceEngine || !resourceEngine) return <div>Loading...</div>;
+  return (
+    <MPGPageRenderer engine={commerceEngine} resourceEngine={resourceEngine} />
+  );
 };
 
 export default MPGPage;

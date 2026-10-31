@@ -57,7 +57,7 @@ export async function initializeHeadlessEngine() {
       accessToken: await getSearchToken(),
       renewAccessToken: getSearchToken,
       search: {
-        searchHub: "default",
+        searchHub: "mpg-healthcare-resources",
       },
     },
   });

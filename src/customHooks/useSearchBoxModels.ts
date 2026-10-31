@@ -14,7 +14,10 @@ import {
  * the subscription below, and the factory is a cheap object literal with nothing to
  * optimise.
  */
-export const useHeadlessSearchBoxModel = (controller: any): SearchBoxModel => {
+export const useHeadlessSearchBoxModel = (
+  controller: any,
+  onSubmitQuery?: (query: string) => void,
+): SearchBoxModel => {
   const [, setStateVersion] = useState(0);
 
   useEffect(
@@ -25,7 +28,7 @@ export const useHeadlessSearchBoxModel = (controller: any): SearchBoxModel => {
     [controller],
   );
 
-  return createHeadlessSearchBoxModel(controller);
+  return createHeadlessSearchBoxModel(controller, onSubmitQuery);
 };
 
 /**

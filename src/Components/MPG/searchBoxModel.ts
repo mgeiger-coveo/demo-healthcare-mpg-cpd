@@ -28,19 +28,25 @@ export interface SearchBoxModel {
  */
 export const createHeadlessSearchBoxModel = (
   controller: any,
+  onSubmitQuery?: (query: string) => void,
 ): SearchBoxModel => ({
   value: controller.state.value,
   suggestions: controller.state.suggestions ?? [],
   updateText: (value) => controller.updateText(value),
   clear: () => {
+    onSubmitQuery?.("");
     controller.clear();
     controller.submit();
   },
   submitQuery: (value) => {
+    onSubmitQuery?.(value);
     controller.updateText(value);
     controller.submit();
   },
-  selectSuggestion: (value) => controller.selectSuggestion(value),
+  selectSuggestion: (value) => {
+    onSubmitQuery?.(value);
+    controller.selectSuggestion(value);
+  },
 });
 
 /**
