@@ -52,6 +52,7 @@ import {
   coerceViewMode,
   deferEngineStateUpdate,
   orderSpecialtyValues,
+  readQueryFromFragment,
   requestFirstRequestOnce,
 } from "./mpgUtils";
 // Both pages' url-manager writers share one route predicate and one history-url builder,
@@ -122,12 +123,14 @@ const MPGPageRenderer: FunctionComponent<MPGPageRendererProps> = (props) => {
   >("idle");
   const [resources, setResources] = useState<RelatedResource[]>([]);
   const lastResourceQuery = useRef<string | null>(null);
+  const currentResourceQuery = useRef("");
 
   const submitRelatedResources = useCallback(
     (value: string) => {
       const query = String(value ?? "").trim();
       if (!query) {
         lastResourceQuery.current = null;
+        currentResourceQuery.current = "";
         setResourceQuery("");
         setResources([]);
         setResourceStatus("idle");
@@ -136,6 +139,7 @@ const MPGPageRenderer: FunctionComponent<MPGPageRendererProps> = (props) => {
       if (lastResourceQuery.current === query) return;
 
       lastResourceQuery.current = query;
+      currentResourceQuery.current = query;
       setResourceQuery(query);
       setResources([]);
       setResourceStatus("loading");
@@ -148,12 +152,13 @@ const MPGPageRenderer: FunctionComponent<MPGPageRendererProps> = (props) => {
   useEffect(
     () =>
       resourceEngine.subscribe(() => {
+        const query = currentResourceQuery.current;
         const searchState = resourceEngine.state.search;
         if (
-          resourceStatus !== "loading" ||
+          !query ||
           searchState.isLoading ||
-          searchState.queryExecuted !== resourceQuery ||
-          resourceEngine.state.query.q !== resourceQuery
+          searchState.queryExecuted !== query ||
+          resourceEngine.state.query.q !== query
         )
           return;
         if (searchState.error) {
@@ -166,7 +171,7 @@ const MPGPageRenderer: FunctionComponent<MPGPageRendererProps> = (props) => {
         setResources(validResources);
         setResourceStatus("loaded");
       }),
-    [resourceEngine, resourceStatus],
+    [resourceEngine],
   );
 
   useEffect(() => {

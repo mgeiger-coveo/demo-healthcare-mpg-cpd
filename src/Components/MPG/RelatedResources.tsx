@@ -59,7 +59,7 @@ const RelatedResources: FunctionComponent<RelatedResourcesProps> = (props) => {
         <span>{isExpanded ? "Hide" : "Show"}</span>
       </HeadingButton>
 
-      <Collapse in={isExpanded}>
+      {!resources.length && (
         <ResourcesRegion aria-live="polite">
           {isLoading ? (
             <Typography variant="body2" sx={{ color: Theme.secondaryText }}>
@@ -71,49 +71,53 @@ const RelatedResources: FunctionComponent<RelatedResourcesProps> = (props) => {
               approved resource source and mpg-healthcare-resources pipeline are
               still needed.
             </Typography>
-          ) : resources.length === 0 ? (
+          ) : (
             <Typography variant="body2" sx={{ color: Theme.secondaryText }}>
               No related services or resources are available for this search. An
               approved resource source and mpg-healthcare-resources pipeline are
               still needed.
             </Typography>
-          ) : (
-            <>
-              <ResourceList>
-                {visibleResources.map((resource) => (
-                  <ResourceCard key={resource.link}>
-                    {resource.type && (
-                      <ResourceType>{resource.type}</ResourceType>
-                    )}
-                    <Typography variant="subtitle1" component="h3">
-                      <ResourceLink href={resource.link}>
-                        {resource.title}
-                      </ResourceLink>
-                    </Typography>
-                    {resource.description && (
-                      <Typography
-                        variant="body2"
-                        sx={{ color: Theme.secondaryText, marginTop: "6px" }}
-                      >
-                        {resource.description}
-                      </Typography>
-                    )}
-                  </ResourceCard>
-                ))}
-              </ResourceList>
-              {resources.length > INITIAL_RESULT_LIMIT && (
-                <Button
-                  size="small"
-                  sx={{ marginTop: "12px" }}
-                  onClick={() => setShowAll((visible) => !visible)}
-                >
-                  {showAll ? "Show less" : "Show more"}
-                </Button>
-              )}
-            </>
           )}
         </ResourcesRegion>
-      </Collapse>
+      )}
+
+      {resources.length > 0 && (
+        <Collapse in={isExpanded}>
+          <ResourcesRegion>
+            <ResourceList>
+              {visibleResources.map((resource) => (
+                <ResourceCard key={resource.link}>
+                  {resource.type && (
+                    <ResourceType>{resource.type}</ResourceType>
+                  )}
+                  <Typography variant="subtitle1" component="h3">
+                    <ResourceLink href={resource.link}>
+                      {resource.title}
+                    </ResourceLink>
+                  </Typography>
+                  {resource.description && (
+                    <Typography
+                      variant="body2"
+                      sx={{ color: Theme.secondaryText, marginTop: "6px" }}
+                    >
+                      {resource.description}
+                    </Typography>
+                  )}
+                </ResourceCard>
+              ))}
+            </ResourceList>
+            {resources.length > INITIAL_RESULT_LIMIT && (
+              <Button
+                size="small"
+                sx={{ marginTop: "12px" }}
+                onClick={() => setShowAll((visible) => !visible)}
+              >
+                {showAll ? "Show less" : "Show more"}
+              </Button>
+            )}
+          </ResourcesRegion>
+        </Collapse>
+      )}
     </Section>
   );
 };
