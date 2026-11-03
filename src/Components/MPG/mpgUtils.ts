@@ -258,6 +258,21 @@ export const buildSpecialtyFacetHref = (value: any) =>
   )}`;
 
 /**
+ * The /mpg target for an All Providers navigation. It removes only specialty facet
+ * parameters, preserving the query and every non-specialty refinement for the search
+ * page's URL manager to restore.
+ */
+export const buildAllProvidersHref = (fragment: any) => {
+  const specialtyParameter = `f-${MPG_SPECIALTY_FACET_ID}`;
+  const retained = String(fragment ?? "")
+    .split("&")
+    .filter((pair) => pair && pair.split("=", 1)[0] !== specialtyParameter);
+  return retained.length > 0
+    ? `${MPG_SEARCH_PAGE_PATH}#${retained.join("&")}`
+    : MPG_SEARCH_PAGE_PATH;
+};
+
+/**
  * The `q` parameter carried by a url fragment, decoded, or "" when there is none. This is
  * the input to the search page's explicit querySet write: the page states the text its
  * input shows instead of inheriting whatever a previous search left behind.
@@ -419,15 +434,44 @@ export type SpecialtyPillItem =
 export const buildSpecialtyPillItems = (args: {
   /** Response facet values, ALREADY ordered/limited by the caller via orderSpecialtyValues. */
   facetValues: any[] | undefined;
+  /** Stable configured fallback values that stay navigable if a selected facet response
+   * omits alternatives. */
+  baselineValues?: string[];
   pages: MPGSpecialtyListingConfigType[] | undefined;
   /** The slug of the listing page being rendered, or null on the search page. */
   currentSlug: string | null;
   /** What to do with a response value that has no configured page. */
   unconfiguredValues: "toggle" | "searchLink";
 }): SpecialtyPillItem[] => {
-  const { facetValues, pages, currentSlug, unconfiguredValues } = args;
+  const {
+    facetValues,
+    baselineValues,
+    pages,
+    currentSlug,
+    unconfiguredValues,
+  } = args;
   const configured = Array.isArray(pages) ? pages : [];
   const currentKey = normalizeSpecialtyKey(currentSlug ?? "");
+  const responseValues = Array.isArray(facetValues) ? facetValues : [];
+  const valuesByKey = new Map(
+    responseValues.map((value) => [
+      normalizeSpecialtyKey(value?.value ?? value),
+      value,
+    ]),
+  );
+  const stableValues = (
+    Array.isArray(baselineValues) ? baselineValues : []
+  ).map((value) => valuesByKey.get(normalizeSpecialtyKey(value)) ?? { value });
+  const allFacetValues = [
+    ...stableValues,
+    ...responseValues.filter((value) => {
+      const key = normalizeSpecialtyKey(value?.value ?? value);
+      return !stableValues.some(
+        (stableValue) =>
+          normalizeSpecialtyKey(stableValue?.value ?? stableValue) === key,
+      );
+    }),
+  ];
 
   const items: SpecialtyPillItem[] = configured.map((entry) => ({
     kind: "link",
@@ -438,7 +482,7 @@ export const buildSpecialtyPillItems = (args: {
       currentKey !== "" && normalizeSpecialtyKey(entry.slug) === currentKey,
   }));
 
-  (Array.isArray(facetValues) ? facetValues : []).forEach((facetValue) => {
+  allFacetValues.forEach((facetValue) => {
     const label = String(facetValue?.value ?? facetValue ?? "");
     if (!label) return;
     if (findListingBySpecialtyValue(label, configured)) return;

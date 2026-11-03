@@ -347,6 +347,7 @@ const MPGPageRenderer: FunctionComponent<MPGPageRendererProps> = (props) => {
       MPG_SPECIALTY_BUTTON_ORDER,
       MPG_SPECIALTY_BUTTON_LIMIT,
     ),
+    baselineValues: MPG_SPECIALTY_BUTTON_ORDER,
     pages: MPG_SPECIALTY_LISTING_PAGES,
     currentSlug: null,
     unconfiguredValues: "toggle",

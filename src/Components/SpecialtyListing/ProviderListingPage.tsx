@@ -50,6 +50,7 @@ import {
 } from "../../config/MPGConfig";
 import { MPGSpecialtyListingConfigType } from "../../config/Types/ConfigTypes";
 import {
+  buildAllProvidersHref,
   buildListingPath,
   buildSpecialtyPillItems,
   coerceViewMode,
@@ -316,6 +317,7 @@ const ProviderListingPageRenderer: FunctionComponent<
       MPG_SPECIALTY_BUTTON_ORDER,
       MPG_SPECIALTY_BUTTON_LIMIT,
     ),
+    baselineValues: MPG_SPECIALTY_BUTTON_ORDER,
     pages: MPG_SPECIALTY_LISTING_PAGES,
     currentSlug: entry.slug,
     // On a listing page every pill navigates, so an unconfigured specialty goes to the
@@ -463,7 +465,7 @@ const ProviderListingPageRenderer: FunctionComponent<
         <SpecialtyButtons
           items={specialtyItems}
           isLoading={summary.state.isLoading}
-          allProvidersHref={SEARCH_PAGE_PATH}
+          allProvidersHref={buildAllProvidersHref(readFragment())}
         />
 
         <Divider sx={{ margin: "32px 0" }} />

@@ -6,6 +6,7 @@ import {
   buildProvidersHeading,
   buildProviderSuggestionLine,
   buildSearchQueryHref,
+  buildAllProvidersHref,
   buildSearchViewUrl,
   buildSpecialtyFacetHref,
   buildSpecialtyPillItems,
@@ -570,6 +571,41 @@ describe("buildSpecialtyPillItems", () => {
     });
   });
 
+  it("preserves configured baseline specialties when response values are unavailable", () => {
+    const items = buildSpecialtyPillItems({
+      facetValues: [{ value: "Neurology" }],
+      baselineValues: MPG_SPECIALTY_BUTTON_ORDER,
+      pages: MPG_SPECIALTY_LISTING_PAGES,
+      currentSlug: null,
+      unconfiguredValues: "toggle",
+    });
+
+    expect(items.map((item) => item.label)).toEqual([
+      "Cardiology",
+      "Orthopedics",
+      "Primary Care",
+      "Dermatology",
+      "Neurology",
+    ]);
+    expect(items.filter((item) => item.kind === "toggle")).toEqual([
+      {
+        kind: "toggle",
+        label: "Primary Care",
+        facetValue: { value: "Primary Care" },
+      },
+      {
+        kind: "toggle",
+        label: "Dermatology",
+        facetValue: { value: "Dermatology" },
+      },
+      {
+        kind: "toggle",
+        label: "Neurology",
+        facetValue: { value: "Neurology" },
+      },
+    ]);
+  });
+
   it("renders the configured links before any response arrives", () => {
     // T-19 — never the fallback specialty list, and never an "All Providers" pill: the
     // component appends that, because its behaviour differs per page type.
@@ -646,6 +682,17 @@ describe("buildSpecialtyFacetHref", () => {
     expect(buildSpecialtyFacetHref("Primary Care")).toBe(
       "/mpg#f-hc_specialties=Primary%20Care",
     );
+  });
+});
+
+describe("buildAllProvidersHref", () => {
+  it("removes only specialty selections", () => {
+    expect(
+      buildAllProvidersHref(
+        "q=neurologist&f-hc_specialties=Neurology&f-hc_locations=Boston&page=2",
+      ),
+    ).toBe("/mpg#q=neurologist&f-hc_locations=Boston&page=2");
+    expect(buildAllProvidersHref("f-hc_specialties=Neurology")).toBe("/mpg");
   });
 });
 
