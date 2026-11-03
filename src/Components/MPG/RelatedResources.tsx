@@ -67,15 +67,12 @@ const RelatedResources: FunctionComponent<RelatedResourcesProps> = (props) => {
             </Typography>
           ) : error ? (
             <Typography variant="body2" color="error">
-              Related services and resources are unavailable right now. An
-              approved resource source and mpg-healthcare-resources pipeline are
-              still needed.
+              Related services and resources are unavailable right now.
             </Typography>
           ) : (
             <Typography variant="body2" sx={{ color: Theme.secondaryText }}>
-              No related services or resources are available for this search. An
-              approved resource source and mpg-healthcare-resources pipeline are
-              still needed.
+              No related services or resources are available for this search.
+              Try a different search term.
             </Typography>
           )}
         </ResourcesRegion>
