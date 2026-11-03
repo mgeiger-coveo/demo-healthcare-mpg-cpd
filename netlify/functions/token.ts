@@ -24,6 +24,19 @@ const API_KEY = INJECTED_API_KEY.startsWith("INJECT_")
 const USER_EMAIL = INJECTED_USER_EMAIL.startsWith("INJECT_")
   ? process.env.USER_EMAIL
   : INJECTED_USER_EMAIL;
+const isNetlifyDev =
+  process.env.NETLIFY_DEV === "true" || process.env.CONTEXT === "dev";
+
+const getEnvironmentDiagnostics = () => ({
+  runtime: "netlify-dev",
+  environmentSource: "process.env fallback for unreplaced build placeholders",
+  variablePresence: {
+    PLATFORM_URL: Boolean(PLATFORM_URL),
+    ORGANIZATION_ID: Boolean(ORGANIZATION_ID),
+    API_KEY: Boolean(API_KEY),
+    USER_EMAIL: Boolean(USER_EMAIL),
+  },
+});
 
 export const handler = async (event: any) => {
   // Allow GET and POST requests
@@ -41,6 +54,7 @@ export const handler = async (event: any) => {
       body: JSON.stringify({
         message:
           "Missing required environment variables. Please configure PLATFORM_URL, ORGANIZATION_ID, API_KEY, and USER_EMAIL in Netlify.",
+        ...(isNetlifyDev && { diagnostics: getEnvironmentDiagnostics() }),
       }),
     };
   }
