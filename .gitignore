@@ -39,6 +39,3 @@ dist
 /.agents/
 
 /.env
-
-# Generated Graphify knowledge graph and reports
-/graphify-out/
