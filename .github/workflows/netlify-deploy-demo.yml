@@ -31,13 +31,13 @@ jobs:
 
       - name: Set up environment variables
         run: |
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.TRANE_AGENT_AWS_ACCESS_KEY_ID }}" >> .env
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.TRANE_AGENT_AWS_SECRET_ACCESS_KEY }}" >> .env
+          echo "HC_AWS_ACCESS_KEY_ID=${{ secrets.TRANE_AGENT_HC_AWS_ACCESS_KEY_ID }}" >> .env
+          echo "HC_AWS_SECRET_ACCESS_KEY=${{ secrets.TRANE_AGENT_HC_AWS_SECRET_ACCESS_KEY }}" >> .env
 
       - name: Inject AWS credentials into edge function
         run: |
-          sed -i 's/TRANE_AGENT_AWS_ACCESS_KEY_ID/${{ secrets.TRANE_AGENT_AWS_ACCESS_KEY_ID }}/g' netlify/edge-functions/agent-stream.ts
-          sed -i 's/TRANE_AGENT_AWS_SECRET_ACCESS_KEY/${{ secrets.TRANE_AGENT_AWS_SECRET_ACCESS_KEY }}/g' netlify/edge-functions/agent-stream.ts
+          sed -i 's/TRANE_AGENT_HC_AWS_ACCESS_KEY_ID/${{ secrets.TRANE_AGENT_HC_AWS_ACCESS_KEY_ID }}/g' netlify/edge-functions/agent-stream.ts
+          sed -i 's/TRANE_AGENT_HC_AWS_SECRET_ACCESS_KEY/${{ secrets.TRANE_AGENT_HC_AWS_SECRET_ACCESS_KEY }}/g' netlify/edge-functions/agent-stream.ts
           echo "✅ Injected AWS credentials into edge function"
 
       - name: Inject environment variables into edge function
@@ -179,8 +179,8 @@ jobs:
           NETLIFY_SITE_ID: ${{ steps.ensure_site.outputs.site_id }}
         run: |
           echo "🔧 Setting environment variables..."
-          npx netlify env:set AWS_ACCESS_KEY_ID "${{ secrets.TRANE_AGENT_AWS_ACCESS_KEY_ID }}" --scope builds --scope functions --scope runtime
-          npx netlify env:set AWS_SECRET_ACCESS_KEY "${{ secrets.TRANE_AGENT_AWS_SECRET_ACCESS_KEY }}" --scope builds --scope functions --scope runtime
+          npx netlify env:set HC_AWS_ACCESS_KEY_ID "${{ secrets.TRANE_AGENT_HC_AWS_ACCESS_KEY_ID }}" --scope builds --scope functions --scope runtime
+          npx netlify env:set HC_AWS_SECRET_ACCESS_KEY "${{ secrets.TRANE_AGENT_HC_AWS_SECRET_ACCESS_KEY }}" --scope builds --scope functions --scope runtime
           echo "✅ Environment variables set"
           echo "⏳ Waiting for propagation..."
           sleep 10

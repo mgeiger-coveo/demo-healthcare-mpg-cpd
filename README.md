@@ -82,7 +82,7 @@ The Application Runs on **[localhost:5173/](http://localhost:5173/)**
 ## Configuration Steps
 
 1. Copy [.env.example](./.env.example) to `.env` and update the configuration: the required API keys, organization ID, Commerce Storefront values.
-1. For Commerce agent: Create a `.env.local` file at the root of the project and add your AWS credentials (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`). _You can ask the team (SEs, or jdevost) for the credentials if you don't have them._
+1. For Commerce agent: Create a `.env.local` file at the root of the project and add your AWS credentials (`HC_AWS_ACCESS_KEY_ID` and `HC_AWS_SECRET_ACCESS_KEY`). _You can ask the team (SEs, or jdevost) for the credentials if you don't have them._
 1. For Commerce agent: update `VITE_AGENT_NAME` and `VITE_AGENT_PURPOSE` in file [.env](./.env)
 
 ### Agent Configuration (optional)
@@ -101,8 +101,8 @@ AWS_ROLE_ARN=arn:aws:iam::your-account-id:role/YourRole
 AWS_BEDROCK_AGENTCORE_RUNTIME_ARN=arn:aws:bedrock-agentcore:us-east-1:your-account-id:runtime/your-runtime
 
 # AWS credentials (put these in .env.local, NOT in .env)
-# AWS_ACCESS_KEY_ID=AKIA...
-# AWS_SECRET_ACCESS_KEY=lho...
+# HC_AWS_ACCESS_KEY_ID=AKIA...
+# HC_AWS_SECRET_ACCESS_KEY=lho...
 ```
 
 ## Creating demo branches

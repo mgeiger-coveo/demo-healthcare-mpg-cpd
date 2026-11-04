@@ -30,8 +30,8 @@ export default async (request: Request, context: Context) => {
   // List of required environment variables for access key auth
   const requiredAccessKeys = [
     "AWS_REGION",
-    "AWS_ACCESS_KEY_ID",
-    "AWS_SECRET_ACCESS_KEY",
+    "HC_AWS_ACCESS_KEY_ID",
+    "HC_AWS_SECRET_ACCESS_KEY",
     "AWS_BEDROCK_AGENTCORE_RUNTIME_ARN",
   ];
 
@@ -159,11 +159,11 @@ AWS_BEDROCK_AGENTCORE_RUNTIME_ARN=arn:aws:bedrock-agentcore:us-east-1:<your-aws-
             local: "Create a .env file in the project root",
             netlify:
               "Set in Netlify dashboard under Site settings > Environment variables",
-            required: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
+            required: ["HC_AWS_ACCESS_KEY_ID", "HC_AWS_SECRET_ACCESS_KEY"],
             example: `
 AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+HC_AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+HC_AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 AWS_BEDROCK_AGENTCORE_RUNTIME_ARN=arn:aws:bedrock-agentcore:us-east-1:<your-aws-account-id>:runtime/<your-runtime-name>
             `.trim(),
           },

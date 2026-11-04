@@ -90,10 +90,11 @@ const handler = async (request: Request, context: Context) => {
 
     // Get AWS credentials for SigV4 authentication
     const accessKeyId =
-      Deno.env.get("AWS_ACCESS_KEY_ID") || "TRANE_AGENT_AWS_ACCESS_KEY_ID";
+      Deno.env.get("HC_AWS_ACCESS_KEY_ID") ||
+      "TRANE_AGENT_HC_AWS_ACCESS_KEY_ID";
     const secretAccessKey =
-      Deno.env.get("AWS_SECRET_ACCESS_KEY") ||
-      "TRANE_AGENT_AWS_SECRET_ACCESS_KEY";
+      Deno.env.get("HC_AWS_SECRET_ACCESS_KEY") ||
+      "TRANE_AGENT_HC_AWS_SECRET_ACCESS_KEY";
     const sessionToken = Deno.env.get("AWS_SESSION_TOKEN"); // Optional, for temporary credentials
 
     if (!accessKeyId || !secretAccessKey) {
@@ -101,8 +102,8 @@ const handler = async (request: Request, context: Context) => {
         JSON.stringify({
           error: "Configuration Error",
           message:
-            "AWS credentials not configured. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.",
-          required: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
+            "AWS credentials not configured. Please set HC_AWS_ACCESS_KEY_ID and HC_AWS_SECRET_ACCESS_KEY.",
+          required: ["HC_AWS_ACCESS_KEY_ID", "HC_AWS_SECRET_ACCESS_KEY"],
           optional: ["AWS_SESSION_TOKEN"],
         }),
         {
